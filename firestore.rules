@@ -61,78 +61,118 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    match /users/{uid}/transactions/{transactionID} {
+      allow create: if 
+        isAuthenticated() &&
+        isOwner(uid) &&
+        validateProps(['amount', 'type', 'date', 'category', 'wallet'], ['description']) &&
+        TransactionSchema(request.resource.data);
+
+      allow update: if 
+        isAuthenticated() &&
+        isOwner(uid) &&
+        canUpdate(['amount', 'type', 'date', 'category', 'wallet', 'description']) && 
+        TransactionSchema(request.resource.data);
+
+      allow read, delete: if 
+        isAuthenticated() && 
+        isOwner(uid);
+    }
+
+    // Checks if user is logged in.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Cheks if user is logged in as a guest.
+    function isAnonymous() {
+      return request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    // Allows to update ONLY certian fields.
+    function canUpdate(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields)
+    }
+
+    // Sets required and optional fields.
+    function validateProps(required, optional){
+      let fields = required.concat(optional);
+      let resourceKeys = request.resource.data.keys();
+
+      return resourceKeys.hasAll(required) && resourceKeys.hasOnly(fields); 
+    }
+
+    // Cheks if user owns the document.
+    function isOwner(uid) {
+      return uid == request.auth.uid;
+    }
+
+    // |------ Documents schemas ------|
+
+    function UserSchema(data) {
+      let userName = (isAnonymous() ? '' : request.auth.token.name);
+      let userEmail = (isAnonymous() ? '' : request.auth.token.email);
+      let emailVerified = (isAnonymous() ? false : request.auth.token.email_verified);
+
+      return
+        data.createdAt is timestamp &&
+        data.createdAt <= request.time &&
+
+        data.displayName is string &&
+        data.displayName == userName &&
+
+        data.email is string &&
+        data.email == userEmail &&
+
+        data.emailVerified is bool &&
+        data.emailVerified == emailVerified &&
+
+        data.isAnonymous is bool &&
+
+        data.photoURL is string
+    }
+
+    function WalletSchema(data) {
+      return 
+        data.name is string &&
+        data.name.size() >= 3 &&
+        data.name.size() <= 32 &&
+        
+        data.balance is number &&
+        data.balance >= 0;
+    }
+
+    function CategorySchema(data) {
+      return 
+        data.name is string &&
+        data.name.size() >= 3 &&
+        data.name.size() <= 64 &&
+
+        data.icon is string &&
+        data.iconPath is string;
+    }
+
+    function TransactionSchema(data) {
+      return 
+        data.amount is number &&
+        data.amount > 0 &&
+
+        data.type is string &&
+        data.type in ['expense', 'income'] &&
+
+        data.date is timestamp &&
+
+        data.category is string && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/categories/$(data.category)) &&
+
+        data.wallet is string &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)/wallets/$(data.wallet)) &&
+
+        data.get('description', '') is string &&
+        data.get('description', 'aaa').size() >= 3 &&
+        data.get('description', '').size() <= 128;
+    }
   }
 }
 
-// Checks if user is logged in.
-function isAuthenticated() {
-  return request.auth != null;
-}
-
-// Cheks if user is logged in as a guest.
-function isAnonymous() {
-  return request.auth.token.firebase.sign_in_provider == 'anonymous';
-}
-
-// Allows to update ONLY certian fields.
-function canUpdate(fields) {
-  return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields)
-}
-
-// Sets required and optional fields.
-function validateProps(required, optional){
-  let fields = required.concat(optional);
-  let resourceKeys = request.resource.data.keys();
-
-  return resourceKeys.hasAll(required) && resourceKeys.hasOnly(fields); 
-}
-
-// Cheks if user owns the document.
-function isOwner(uid) {
-  return uid == request.auth.uid;
-}
-
-// |------ Documents schemas ------|
-
-function UserSchema(data) {
-  let userName = (isAnonymous() ? '' : request.auth.token.name);
-  let userEmail = (isAnonymous() ? '' : request.auth.token.email);
-  let emailVerified = (isAnonymous() ? false : request.auth.token.email_verified);
-
-  return
-    data.createdAt is timestamp &&
-    data.createdAt <= request.time &&
-
-    data.displayName is string &&
-    data.displayName == userName &&
-
-    data.email is string &&
-    data.email == userEmail &&
-
-    data.emailVerified is bool &&
-    data.emailVerified == emailVerified &&
-
-    data.isAnonymous is bool &&
-
-    data.photoURL is string
-}
-
-function WalletSchema(data) {
-  return 
-    data.name is string &&
-    data.name.size() >= 3 &&
-    data.name.size() <= 32 &&
-    
-    data.balance is number &&
-    data.balance >= 0;
-}
-
-function CategorySchema(data) {
-  return 
-    data.name is string &&
-    data.name.size() >= 3 &&
-    data.name.size() <= 64 &&
-
-    data.icon is string &&
-    data.iconPath is string;
-}
