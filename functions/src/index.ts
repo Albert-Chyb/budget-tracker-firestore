@@ -4,6 +4,8 @@ import { initializeApp } from 'firebase-admin';
 import excludeTransaction from './helpers/statistics/excludeTransaction';
 import includeTransaction from './helpers/statistics/includeTransaction';
 import { ITransaction } from './interfaces/transaction';
+import insertTransaction from './helpers/wallets/insertTransaction';
+import takeOutTransaction from './helpers/wallets/takeOutTransaction';
 
 initializeApp();
 
@@ -38,19 +40,21 @@ export const deleteCategoryIconOnUpdate = functions.firestore
 		}
 	});
 
-export const manageWalletStatisticsOnCreate = functions.firestore
+export const onTransactionCreate = functions.firestore
 	.document('users/{uid}/transactions/{transactionID}')
-	.onCreate(async (snap, context) =>
-		includeTransaction(snap, <any>context.params, { checkForExistence: true })
-	);
+	.onCreate(async (snap, context) => {
+		// Insert the transaction into the wallet.
+		await insertTransaction(<any>snap, <any>context.params);
+	});
 
-export const manageWalletStatisticsOnDelete = functions.firestore
+export const onTransactionDelete = functions.firestore
 	.document('users/{uid}/transactions/{transactionID}')
-	.onDelete(async (snap, context) =>
-		excludeTransaction(snap, <any>context.params)
-	);
+	.onDelete(async (snap, context) => {
+		// Take out the transaction from the wallet.
+		await takeOutTransaction(<any>snap, <any>context.params);
+	});
 
-export const manageWalletStatisticsOnUpdate = functions.firestore
+export const onTransactionUpdate = functions.firestore
 	.document('users/{uid}/transactions/{transactionID}')
 	.onUpdate(async (change, context) => {
 		const before = change.before.data() as ITransaction;
@@ -67,9 +71,7 @@ export const manageWalletStatisticsOnUpdate = functions.firestore
 
 		if (shouldRun) {
 			await excludeTransaction(change.before, <any>context.params);
-			await includeTransaction(change.after, <any>context.params, {
-				checkForExistence: false,
-			});
+			await includeTransaction(change.after, <any>context.params);
 		} else {
 			return Promise.resolve();
 		}
