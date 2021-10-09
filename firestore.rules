@@ -140,7 +140,8 @@ service cloud.firestore {
         data.name.size() <= 32 &&
         
         data.balance is int &&
-        data.balance >= 0;
+        data.balance >= 0 &&
+        data.balance <= 100000000;
     }
 
     function CategorySchema(data) {
@@ -157,6 +158,7 @@ service cloud.firestore {
       return 
         data.amount is int &&
         data.amount > 0 &&
+        data.amount <= 100000000 &&
 
         data.type is string &&
         data.type in ['expense', 'income'] &&
