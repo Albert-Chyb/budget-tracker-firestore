@@ -1,12 +1,9 @@
-import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { initializeApp } from 'firebase-admin';
-import excludeTransaction from './helpers/statistics/excludeTransaction';
-import includeTransaction from './helpers/statistics/includeTransaction';
-import { ITransaction } from './interfaces/transaction';
+import { firestore, initializeApp } from 'firebase-admin';
+import * as functions from 'firebase-functions';
 import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
-import { firestore } from 'firebase-admin';
+import { ITransaction } from './interfaces/transaction';
 import { isReferenced } from './utils/refrences';
 
 initializeApp();
@@ -72,8 +69,8 @@ export const onTransactionUpdate = functions.firestore
 			before.category !== after.category;
 
 		if (shouldRun) {
-			await excludeTransaction(change.before, <any>context.params);
-			await includeTransaction(change.after, <any>context.params);
+			await takeOutTransaction(<any>change.before, <any>context.params);
+			await insertTransaction(<any>change.after, <any>context.params);
 		} else {
 			return Promise.resolve();
 		}
