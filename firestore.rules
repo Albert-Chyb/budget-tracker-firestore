@@ -139,7 +139,7 @@ service cloud.firestore {
         data.name.size() >= 3 &&
         data.name.size() <= 32 &&
         
-        data.balance is number &&
+        data.balance is int &&
         data.balance >= 0;
     }
 
@@ -155,7 +155,7 @@ service cloud.firestore {
 
     function TransactionSchema(data) {
       return 
-        data.amount is number &&
+        data.amount is int &&
         data.amount > 0 &&
 
         data.type is string &&
