@@ -1,12 +1,11 @@
 import * as admin from 'firebase-admin';
-import { firestore, initializeApp } from 'firebase-admin';
+import { initializeApp } from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import deleteCat from './callable-functions/delete-category';
+import deleteCategoryCallable from './callable-functions/delete-category';
+import deleteWalletCallable from './callable-functions/delete-wallet';
 import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
 import { ITransaction } from './interfaces/transaction';
-import { SilentError, SilentSuccess } from './models/silent-error';
-import { isReferenced } from './utils/references';
 
 initializeApp();
 
@@ -78,49 +77,6 @@ export const onTransactionUpdate = functions.firestore
 		}
 	});
 
-export const deleteWallet = functions.https.onCall(async (data, context) => {
-	if (!context.auth?.uid) {
-		throw new functions.https.HttpsError(
-			'unauthenticated',
-			'It seems that user is not logged in.',
-			'Could not find uid property of context.auth object.'
-		);
-	}
+export const deleteWallet = functions.https.onCall(deleteWalletCallable);
 
-	if (!('id' in data) || data.id === '') {
-		throw new functions.https.HttpsError(
-			'invalid-argument',
-			'The wallet id is not present.'
-		);
-	}
-
-	if (typeof data.id !== 'string') {
-		throw new functions.https.HttpsError(
-			'invalid-argument',
-			'The wallet `id` property should be a string.'
-		);
-	}
-
-	const uid = context.auth.uid;
-	const walletId: string = data.id;
-	const walletRef = firestore().doc(`users/${uid}/wallets/${walletId}`);
-	const transactionsRef = firestore().collection(`users/${uid}/transactions`);
-	const isWalletReferenced = await isReferenced(
-		walletRef,
-		transactionsRef,
-		'wallet'
-	);
-
-	if (!isWalletReferenced) {
-		await walletRef.delete();
-
-		return new SilentSuccess();
-	} else {
-		return new SilentError(
-			'is-referenced',
-			'The wallet is referenced by a transaction.'
-		);
-	}
-});
-
-export const deleteCategory = functions.https.onCall(deleteCat);
+export const deleteCategory = functions.https.onCall(deleteCategoryCallable);
