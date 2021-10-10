@@ -1,10 +1,12 @@
 import * as admin from 'firebase-admin';
 import { firestore, initializeApp } from 'firebase-admin';
 import * as functions from 'firebase-functions';
+import deleteCat from './callable-functions/delete-category';
 import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
 import { ITransaction } from './interfaces/transaction';
-import { isReferenced } from './utils/refrences';
+import { SilentError, SilentSuccess } from './models/silent-error';
+import { isReferenced } from './utils/references';
 
 initializeApp();
 
@@ -112,14 +114,13 @@ export const deleteWallet = functions.https.onCall(async (data, context) => {
 	if (!isWalletReferenced) {
 		await walletRef.delete();
 
-		return {
-			result: 'success',
-		};
+		return new SilentSuccess();
 	} else {
-		return {
-			result: 'error',
-			code: 'is-referenced',
-			message: 'The wallet is referenced by a transaction.',
-		};
+		return new SilentError(
+			'is-referenced',
+			'The wallet is referenced by a transaction.'
+		);
 	}
 });
+
+export const deleteCategory = functions.https.onCall(deleteCat);
