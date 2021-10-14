@@ -46,13 +46,13 @@ service cloud.firestore {
       allow create: if 
         isAuthenticated() && 
         isOwner(uid) &&
-        validateProps(['name', 'icon', 'iconPath'], []) &&
+        validateProps(['name', 'icon', 'iconPath', 'defaultTransactionsType'], []) &&
         CategorySchema(request.resource.data);
 
       allow update: if 
         isAuthenticated() && 
         isOwner(uid) &&
-        canUpdate(['name', 'icon', 'iconPath']) &&
+        canUpdate(['name', 'icon', 'iconPath', 'defaultTransactionsType']) &&
         CategorySchema(request.resource.data);
 
       allow read: if 
@@ -151,7 +151,10 @@ service cloud.firestore {
         data.name.size() <= 64 &&
 
         data.icon is string &&
-        data.iconPath is string;
+        data.iconPath is string &&
+        
+        data.defaultTransactionsType is string &&
+        data.defaultTransactionsType in ['expense', 'income'];
     }
 
     function TransactionSchema(data) {
