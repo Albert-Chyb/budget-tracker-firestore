@@ -42,6 +42,13 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /users/{uid}/wallets/{walletID}/statistics/{year} {
+      allow write: if false;
+      allow read: if 
+        isAuthenticated() && 
+        isOwner(uid);
+    }
+
     match /users/{uid}/categories/{categoryID} {
       allow create: if 
         isAuthenticated() && 
