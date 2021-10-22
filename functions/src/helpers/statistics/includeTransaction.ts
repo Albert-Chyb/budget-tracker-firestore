@@ -1,15 +1,12 @@
 import { firestore } from 'firebase-admin';
 import { IRequiredStatisticsParams } from '../../interfaces/requiredStatisticsParams';
-import includeExcludeTransaction, {
-	IOptions,
-} from './includeExcludeTransaction';
+import includeExcludeTransaction from './includeExcludeTransaction';
 
 function includeTransaction(
 	transactionSnap: firestore.QueryDocumentSnapshot,
-	params: IRequiredStatisticsParams,
-	options?: IOptions
+	params: IRequiredStatisticsParams
 ) {
-	return includeExcludeTransaction(transactionSnap, 'include', params, options);
+	return includeExcludeTransaction(transactionSnap, 'include', params);
 }
 
 export default includeTransaction;
