@@ -1,6 +1,7 @@
 import { firestore } from 'firebase-admin';
 import { IRequiredStatisticsParams } from '../../interfaces/requiredStatisticsParams';
 import { ITransaction } from '../../interfaces/transaction';
+import { weekOfMonth } from '../../utils/date';
 import { propByString } from '../../utils/propByString';
 import referenceStatistics from './referenceStatistics';
 
@@ -37,7 +38,7 @@ async function includeExcludeTransaction(
 	const monthIndex = transaction.date.toDate().getMonth();
 	const statisticsRef = referenceStatistics(transactionSnap, params);
 	const modifier = operation === 'include' ? 1 : -1;
-	const weekIndex = 3; // TODO: Write a function that gets current week index.
+	const weekIndex = weekOfMonth(transaction.date.toDate());
 
 	transaction.amount *= modifier;
 
@@ -50,7 +51,7 @@ async function includeExcludeTransaction(
 	await statisticsRef.set(statisticsObj, { merge: true });
 
 	if (operation === 'exclude') {
-		// Perform a cleanup when given a period does not include any transaction (when expenses and income is equal to zero)
+		// Perform a cleanup when a given period does not include any transactions (when expenses and income are equal to zero)
 
 		const statsAfterUpdate = (await statisticsRef.get()).data();
 		const paths = [[], [`${monthIndex}`], [`${monthIndex}`, `${weekIndex}`]];
