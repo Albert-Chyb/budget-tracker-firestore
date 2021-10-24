@@ -1,7 +1,7 @@
 import { firestore } from 'firebase-admin';
 import { IRequiredStatisticsParams } from '../../interfaces/requiredStatisticsParams';
 import { ITransaction } from '../../interfaces/transaction';
-import { weekOfMonth } from '../../utils/date';
+import { getDay, weekOfMonth } from '../../utils/date';
 import { propByString } from '../../utils/propByString';
 import referenceStatistics from './referenceStatistics';
 
@@ -35,16 +35,20 @@ async function includeExcludeTransaction(
 	params: IRequiredStatisticsParams
 ) {
 	const transaction = transactionSnap.data() as ITransaction;
-	const monthIndex = transaction.date.toDate().getMonth();
+	const transactionDate = transaction.date.toDate();
 	const statisticsRef = referenceStatistics(transactionSnap, params);
 	const modifier = operation === 'include' ? 1 : -1;
-	const weekIndex = weekOfMonth(transaction.date.toDate());
+	const monthIndex = transactionDate.getMonth();
+	const weekIndex = weekOfMonth(transactionDate);
+	const weekDayIndex = getDay(transactionDate);
 
 	transaction.amount *= modifier;
 
 	const statisticsObj = statistics(transaction, {
 		[monthIndex]: statistics(transaction, {
-			[weekIndex]: statistics(transaction),
+			[weekIndex]: statistics(transaction, {
+				[weekDayIndex]: statistics(transaction),
+			}),
 		}),
 	});
 
@@ -54,7 +58,12 @@ async function includeExcludeTransaction(
 		// Perform a cleanup when a given period does not include any transactions (when expenses and income are equal to zero)
 
 		const statsAfterUpdate = (await statisticsRef.get()).data();
-		const paths = [[], [`${monthIndex}`], [`${monthIndex}`, `${weekIndex}`]];
+		const paths = [
+			[],
+			[`${monthIndex}`],
+			[`${monthIndex}`, `${weekIndex}`],
+			[`${monthIndex}`, `${weekIndex}`, `${weekDayIndex}`],
+		];
 		let cleanupAction: Promise<firestore.WriteResult> = null;
 
 		for (const elements of paths) {
