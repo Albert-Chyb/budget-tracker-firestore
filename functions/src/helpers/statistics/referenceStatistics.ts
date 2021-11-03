@@ -13,7 +13,7 @@ function referenceStatistics(
 	const date = timestamp.toDate();
 
 	return firestore().doc(
-		`users/${params.uid}/wallets/${wallet}/statistics/${date.getFullYear()}`
+		`users/${params.uid}/wallets-statistics/${wallet}-${date.getFullYear()}`
 	);
 }
 

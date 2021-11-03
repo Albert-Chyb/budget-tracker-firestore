@@ -50,6 +50,8 @@ async function includeExcludeTransaction(
 				[weekDayIndex]: statistics(transaction),
 			}),
 		}),
+		year: transactionDate.getFullYear(),
+		walletId: transaction.wallet,
 	});
 
 	await statisticsRef.set(statisticsObj, { merge: true });

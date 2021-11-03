@@ -42,7 +42,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    match /users/{uid}/wallets/{walletID}/statistics/{year} {
+    match /users/{uid}/wallets-statistics/{year} {
       allow write: if false;
       allow read: if 
         isAuthenticated() && 
