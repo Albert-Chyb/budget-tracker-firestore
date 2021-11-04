@@ -3,7 +3,9 @@ import { IRequiredStatisticsParams } from '../../interfaces/requiredStatisticsPa
 import { ITransaction } from '../../interfaces/transaction';
 import { getDay, weekOfMonth } from '../../utils/date';
 import { propByString } from '../../utils/propByString';
-import referenceStatistics from './referenceStatistics';
+import referenceStatistics, {
+	referenceStatisticsYear,
+} from './referenceStatistics';
 
 function statistics(transaction: ITransaction, child?: object) {
 	const field = transaction.type === 'expense' ? 'expenses' : 'income';
@@ -37,6 +39,7 @@ async function includeExcludeTransaction(
 	const transaction = transactionSnap.data() as ITransaction;
 	const transactionDate = transaction.date.toDate();
 	const statisticsRef = referenceStatistics(transactionSnap, params);
+	const statisticsYearRef = referenceStatisticsYear(transactionSnap, params);
 	const modifier = operation === 'include' ? 1 : -1;
 	const monthIndex = transactionDate.getMonth();
 	const weekIndex = weekOfMonth(transactionDate);
@@ -50,44 +53,55 @@ async function includeExcludeTransaction(
 				[weekDayIndex]: statistics(transaction),
 			}),
 		}),
-		year: transactionDate.getFullYear(),
-		walletId: transaction.wallet,
 	});
 
-	await statisticsRef.set(statisticsObj, { merge: true });
+	await Promise.all([
+		statisticsRef.set(statisticsObj, { merge: true }),
+		statisticsYearRef.set(statisticsObj, {
+			merge: true,
+		}),
+	]);
 
 	if (operation === 'exclude') {
 		// Perform a cleanup when a given period does not include any transactions (when expenses and income are equal to zero)
-
-		const statsAfterUpdate = (await statisticsRef.get()).data();
 		const paths = [
 			[],
 			[`${monthIndex}`],
 			[`${monthIndex}`, `${weekIndex}`],
 			[`${monthIndex}`, `${weekIndex}`, `${weekDayIndex}`],
 		];
-		let cleanupAction: Promise<firestore.WriteResult> = null;
 
-		for (const elements of paths) {
-			const { income, expenses } = propByString(statsAfterUpdate, elements);
+		await Promise.all([
+			cleanupStatistics(statisticsRef, paths),
+			cleanupStatistics(statisticsYearRef, paths),
+		]);
+	}
+}
 
-			if (income === 0 && expenses === 0) {
-				const fieldPath = elements.join('.');
+async function cleanupStatistics(
+	ref: firestore.DocumentReference<firestore.DocumentData>,
+	paths: string[][]
+) {
+	const data = (await ref.get()).data();
+	let cleanupAction: Promise<firestore.WriteResult> = null;
 
-				cleanupAction = fieldPath
-					? statisticsRef.update({
-							[fieldPath]: firestore.FieldValue.delete(),
-					  })
-					: statisticsRef.delete();
+	for (const elements of paths) {
+		const { income, expenses } = propByString(data, elements);
 
-				break;
-			}
+		if (income === 0 && expenses === 0) {
+			const fieldPath = elements.join('.');
+
+			cleanupAction = fieldPath
+				? ref.update({
+						[fieldPath]: firestore.FieldValue.delete(),
+				  })
+				: ref.delete();
+
+			break;
 		}
-
-		return Promise.resolve(cleanupAction);
 	}
 
-	return Promise.resolve();
+	return cleanupAction;
 }
 
 export default includeExcludeTransaction;

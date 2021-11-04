@@ -49,6 +49,13 @@ service cloud.firestore {
         isOwner(uid);
     }
 
+    match /users/{uid}/wallets-statistics/{year}/year-by-wallets/{walletID} {
+      allow write: if false;
+      allow read: if 
+        isAuthenticated() && 
+        isOwner(uid);
+    }
+
     match /users/{uid}/categories/{categoryID} {
       allow create: if 
         isAuthenticated() && 

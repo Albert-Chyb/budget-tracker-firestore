@@ -13,7 +13,21 @@ function referenceStatistics(
 	const date = timestamp.toDate();
 
 	return firestore().doc(
-		`users/${params.uid}/wallets-statistics/${wallet}-${date.getFullYear()}`
+		`users/${
+			params.uid
+		}/wallets-statistics/${date.getFullYear()}/year-by-wallets/${wallet}`
+	);
+}
+
+export function referenceStatisticsYear(
+	transactionSnap: firestore.QueryDocumentSnapshot,
+	params: IRequiredStatisticsParams
+) {
+	const { date: timestamp } = transactionSnap.data() as ITransaction;
+	const date = timestamp.toDate();
+
+	return firestore().doc(
+		`users/${params.uid}/wallets-statistics/${date.getFullYear()}`
 	);
 }
 
