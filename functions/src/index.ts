@@ -7,6 +7,18 @@ import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
 import { ITransaction } from './interfaces/transaction';
 
+import utc = require('dayjs/plugin/utc');
+import timezone = require('dayjs/plugin/timezone');
+import weekday = require('dayjs/plugin/weekday');
+import dayjs = require('dayjs');
+require('dayjs/locale/pl');
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(weekday);
+dayjs.locale('pl');
+dayjs.tz.setDefault('Europe/Warsaw');
+
 initializeApp();
 
 function deleteFile(path: string) {
