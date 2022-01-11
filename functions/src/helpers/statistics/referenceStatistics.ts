@@ -1,3 +1,4 @@
+import dayjs = require('dayjs');
 import { firestore } from 'firebase-admin';
 import { IRequiredStatisticsParams } from '../../interfaces/requiredStatisticsParams';
 import { ITransaction } from '../../interfaces/transaction';
@@ -10,12 +11,12 @@ function referenceStatistics(
 	params: IRequiredStatisticsParams
 ) {
 	const { wallet, date: timestamp } = transactionSnap.data() as ITransaction;
-	const date = timestamp.toDate();
+	const date = dayjs.tz(timestamp.toDate());
 
 	return firestore().doc(
 		`users/${
 			params.uid
-		}/wallets-statistics/${date.getFullYear()}/year-by-wallets/${wallet}`
+		}/wallets-statistics/${date.year()}/year-by-wallets/${wallet}`
 	);
 }
 
@@ -24,10 +25,10 @@ export function referenceStatisticsYear(
 	params: IRequiredStatisticsParams
 ) {
 	const { date: timestamp } = transactionSnap.data() as ITransaction;
-	const date = timestamp.toDate();
+	const date = dayjs.tz(timestamp.toDate());
 
 	return firestore().doc(
-		`users/${params.uid}/wallets-statistics/${date.getFullYear()}`
+		`users/${params.uid}/wallets-statistics/${date.year()}`
 	);
 }
 
