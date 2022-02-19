@@ -3,7 +3,8 @@ import { initializeApp } from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import deleteCategoryCallable from './callable-functions/delete-category';
 import deleteWalletCallable from './callable-functions/delete-wallet';
-import { changeCount } from './helpers/info/incrementCount';
+import { changeCount } from './helpers/info/changeCount';
+import { addToDistinct, removeFromDistinct } from './helpers/info/distinct';
 import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
 import { ITransaction } from './interfaces/transaction';
@@ -68,6 +69,24 @@ export const onDocumentDelete = functions.firestore
 
 		return changeCount({ uid, collectionName }, 'dec');
 	});
+
+export const onStatisticsCreate = functions.firestore
+	.document('users/{uid}/wallets-statistics/{year}')
+	.onCreate((snap, context) =>
+		addToDistinct(
+			{ uid: context.params.uid, collectionName: 'wallets-statistics' },
+			snap
+		)
+	);
+
+export const onStatisticsDelete = functions.firestore
+	.document('users/{uid}/wallets-statistics/{year}')
+	.onDelete((snap, context) =>
+		removeFromDistinct(
+			{ uid: context.params.uid, collectionName: 'wallets-statistics' },
+			snap
+		)
+	);
 
 export const onTransactionCreate = functions.firestore
 	.document('users/{uid}/transactions/{transactionID}')
