@@ -3,6 +3,7 @@ import { initializeApp } from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import deleteCategoryCallable from './callable-functions/delete-category';
 import deleteWalletCallable from './callable-functions/delete-wallet';
+import { changeCount } from './helpers/info/incrementCount';
 import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
 import { ITransaction } from './interfaces/transaction';
@@ -50,6 +51,22 @@ export const deleteCategoryIconOnUpdate = functions.firestore
 		} else {
 			return Promise.resolve();
 		}
+	});
+
+export const onDocumentCreate = functions.firestore
+	.document('users/{uid}/{collectionName}/{documentID}')
+	.onCreate((snap, context) => {
+		const { collectionName, uid } = context.params;
+
+		return changeCount({ uid, collectionName }, 'inc');
+	});
+
+export const onDocumentDelete = functions.firestore
+	.document('users/{uid}/{collectionName}/{documentID}')
+	.onDelete((snap, context) => {
+		const { collectionName, uid } = context.params;
+
+		return changeCount({ uid, collectionName }, 'dec');
 	});
 
 export const onTransactionCreate = functions.firestore
