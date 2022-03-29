@@ -107,11 +107,6 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    // Cheks if user is logged in as a guest.
-    function isAnonymous() {
-      return request.auth.token.firebase.sign_in_provider == 'anonymous';
-    }
-
     // Allows to update ONLY certian fields.
     function canUpdate(fields) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields)
@@ -133,22 +128,17 @@ service cloud.firestore {
     // |------ Documents schemas ------|
 
     function UserSchema(data) {
-      let userName = (isAnonymous() ? '' : request.auth.token.name);
-      let userEmail = (isAnonymous() ? '' : request.auth.token.email);
-      let emailVerified = (isAnonymous() ? false : request.auth.token.email_verified);
-
       return
         data.createdAt is timestamp &&
         data.createdAt <= request.time &&
 
         data.displayName is string &&
-        data.displayName == userName &&
+        data.displayName.size() <= 64 &&
 
         data.email is string &&
-        data.email == userEmail &&
+        data.email.size() <= 254 &&
 
         data.emailVerified is bool &&
-        data.emailVerified == emailVerified &&
 
         data.isAnonymous is bool &&
 
