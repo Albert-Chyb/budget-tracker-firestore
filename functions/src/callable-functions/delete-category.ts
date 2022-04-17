@@ -1,6 +1,5 @@
 import { firestore } from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import { SilentIsReferencedError, SilentSuccess } from '../models/silent-error';
 import { isReferenced } from '../utils/references';
 
 const deleteCategory = async (
@@ -41,15 +40,14 @@ const deleteCategory = async (
 		'category'
 	);
 
-	if (!isCategoryReferenced) {
-		await categoryRef.delete();
-
-		return new SilentSuccess();
-	} else {
-		return new SilentIsReferencedError(
-			'The category is referenced by a transaction.'
+	if (isCategoryReferenced) {
+		throw new functions.https.HttpsError(
+			'aborted',
+			'The category is referenced by at least one transaction.'
 		);
 	}
+
+	return categoryRef.delete();
 };
 
 export default deleteCategory;

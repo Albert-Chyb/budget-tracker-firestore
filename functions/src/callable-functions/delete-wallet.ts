@@ -1,6 +1,5 @@
 import { firestore } from 'firebase-admin';
 import * as functions from 'firebase-functions';
-import { SilentIsReferencedError, SilentSuccess } from '../models/silent-error';
 import { isReferenced } from '../utils/references';
 
 const deleteWallet = async (
@@ -39,15 +38,14 @@ const deleteWallet = async (
 		'wallet'
 	);
 
-	if (!isWalletReferenced) {
-		await walletRef.delete();
-
-		return new SilentSuccess();
-	} else {
-		return new SilentIsReferencedError(
+	if (isWalletReferenced) {
+		throw new functions.https.HttpsError(
+			'aborted',
 			'The wallet is referenced by a transaction.'
 		);
 	}
+
+	return walletRef.delete();
 };
 
 export default deleteWallet;
