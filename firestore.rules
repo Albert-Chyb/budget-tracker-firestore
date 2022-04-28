@@ -10,26 +10,6 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    match /users/{uid} {
-      allow create: if 
-        isAuthenticated() && 
-        isOwner(uid) && 
-        validateProps(['createdAt', 'displayName', 'email', 'emailVerified', 'isAnonymous', 'photoURL'], []) &&
-        UserSchema(request.resource.data);
-      
-      allow update: if 
-        isAuthenticated() && 
-        isOwner(uid) &&
-        canUpdate(['displayName', 'email', 'emailVerified', 'isAnonymous', 'photoURL']) &&
-        UserSchema(request.resource.data);
-
-      allow read: if 
-        isAuthenticated() && 
-        isOwner(uid);
-
-      allow delete: if false;
-    }
-
     match /users/{uid}/wallets/{walletID} {
       allow create: if 
         isAuthenticated() && 
@@ -126,24 +106,6 @@ service cloud.firestore {
     }
 
     // |------ Documents schemas ------|
-
-    function UserSchema(data) {
-      return
-        data.createdAt is timestamp &&
-        data.createdAt <= request.time &&
-
-        data.displayName is string &&
-        data.displayName.size() <= 64 &&
-
-        data.email is string &&
-        data.email.size() <= 254 &&
-
-        data.emailVerified is bool &&
-
-        data.isAnonymous is bool &&
-
-        data.photoURL is string
-    }
 
     function WalletSchema(data) {
       return 
