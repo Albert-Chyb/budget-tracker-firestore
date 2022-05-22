@@ -7,14 +7,13 @@ import { changeCount } from './helpers/info/changeCount';
 import { addToDistinct, removeFromDistinct } from './helpers/info/distinct';
 import insertTransaction from './helpers/wallets/insertTransaction';
 import takeOutTransaction from './helpers/wallets/takeOutTransaction';
-import { ITransaction } from './interfaces/transaction';
 
 import utc = require('dayjs/plugin/utc');
 import timezone = require('dayjs/plugin/timezone');
 import weekday = require('dayjs/plugin/weekday');
 import dayjs = require('dayjs');
-require('dayjs/locale/pl');
 
+require('dayjs/locale/pl');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 dayjs.extend(weekday);
@@ -59,7 +58,11 @@ export const onDocumentCreate = functions.firestore
 	.onCreate((snap, context) => {
 		const { collectionName, uid } = context.params;
 
-		return changeCount({ uid, collectionName }, 'inc');
+		if (collectionName === 'info') {
+			return changeCount({ uid, collectionName }, 'inc');
+		} else {
+			return Promise.resolve();
+		}
 	});
 
 export const onDocumentDelete = functions.firestore
@@ -67,7 +70,11 @@ export const onDocumentDelete = functions.firestore
 	.onDelete((snap, context) => {
 		const { collectionName, uid } = context.params;
 
-		return changeCount({ uid, collectionName }, 'dec');
+		if (collectionName === 'info') {
+			return changeCount({ uid, collectionName }, 'dec');
+		} else {
+			return Promise.resolve();
+		}
 	});
 
 export const onStatisticsCreate = functions.firestore
@@ -105,24 +112,8 @@ export const onTransactionDelete = functions.firestore
 export const onTransactionUpdate = functions.firestore
 	.document('users/{uid}/transactions/{transactionID}')
 	.onUpdate(async (change, context) => {
-		const before = change.before.data() as ITransaction;
-		const after = change.after.data() as ITransaction;
-
-		// TODO: Write a function that takes 2 objects as parameters, and returns array of keys of which values changed.
-
-		const shouldRun =
-			before.amount !== after.amount ||
-			!before.date.isEqual(after.date) ||
-			before.type !== after.type ||
-			before.wallet !== after.wallet ||
-			before.category !== after.category;
-
-		if (shouldRun) {
-			await takeOutTransaction(<any>change.before, <any>context.params);
-			await insertTransaction(<any>change.after, <any>context.params);
-		} else {
-			return Promise.resolve();
-		}
+		await takeOutTransaction(<any>change.before, <any>context.params);
+		await insertTransaction(<any>change.after, <any>context.params);
 	});
 
 export const deleteWallet = functions.https.onCall(deleteWalletCallable);
