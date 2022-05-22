@@ -4,15 +4,9 @@ service firebase.storage {
     match /{userID}/categories-icons/{categoryID} {
       allow create: if 
         isAuthenticated() &&
-        isOwner(userID)
-
-        // Firebase storage emulator does not attach metadata fields in the resource property.
-        // For that reason we are not checking them while using emulators.
-
-        // ! <----- These 2 rules should be uncommented when deploying the rules to firebase ----->
-
-        // && request.resource.contentType == 'image/svg+xml' 
-        // && request.resource.size <= 32 * 1024;
+        isOwner(userID) &&
+        request.resource.contentType == 'image/svg+xml' && 
+        request.resource.size <= 32 * 1024;
 
       allow get: if isAuthenticated() && isOwner(userID);
       allow list, update, delete: if false;
