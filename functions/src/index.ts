@@ -59,9 +59,9 @@ export const onDocumentCreate = functions.firestore
 		const { collectionName, uid } = context.params;
 
 		if (collectionName === 'info') {
-			return changeCount({ uid, collectionName }, 'inc');
-		} else {
 			return Promise.resolve();
+		} else {
+			return changeCount({ uid, collectionName }, 'inc');
 		}
 	});
 
@@ -71,9 +71,9 @@ export const onDocumentDelete = functions.firestore
 		const { collectionName, uid } = context.params;
 
 		if (collectionName === 'info') {
-			return changeCount({ uid, collectionName }, 'dec');
-		} else {
 			return Promise.resolve();
+		} else {
+			return changeCount({ uid, collectionName }, 'dec');
 		}
 	});
 
