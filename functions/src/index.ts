@@ -37,22 +37,6 @@ export const deleteCategoryIconOnDelete = functions.firestore
 		return deleteFile(iconPath);
 	});
 
-/**
- * It removes old icon from the storage, whenever a category has changed its icon.
- */
-export const deleteCategoryIconOnUpdate = functions.firestore
-	.document('users/{uid}/categories/{categoryID}')
-	.onUpdate(change => {
-		const oldIconPath = change.before.data().iconPath;
-		const newIconPath = change.after.data().iconPath;
-
-		if (oldIconPath !== newIconPath) {
-			return deleteFile(oldIconPath);
-		} else {
-			return Promise.resolve();
-		}
-	});
-
 export const onDocumentCreate = functions.firestore
 	.document('users/{uid}/{collectionName}/{documentID}')
 	.onCreate((snap, context) => {
