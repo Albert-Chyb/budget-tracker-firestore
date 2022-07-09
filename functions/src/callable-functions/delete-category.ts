@@ -1,3 +1,4 @@
+import * as admin from 'firebase-admin';
 import { firestore } from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import { isReferenced } from '../utils/references';
@@ -39,6 +40,7 @@ const deleteCategory = async (
 		transactionsRef,
 		'category'
 	);
+	const category = await categoryRef.get();
 
 	if (isCategoryReferenced) {
 		throw new functions.https.HttpsError(
@@ -47,7 +49,18 @@ const deleteCategory = async (
 		);
 	}
 
-	return categoryRef.delete();
+	const iconPath = `${context.auth.uid}/categories-icons/${categoryRef.id}`;
+	const iconRef = admin.storage().bucket().file(iconPath);
+
+	await categoryRef.delete();
+
+	try {
+		await iconRef.delete();
+	} catch (error) {
+		await categoryRef.create(category.data());
+
+		throw error;
+	}
 };
 
 export default deleteCategory;

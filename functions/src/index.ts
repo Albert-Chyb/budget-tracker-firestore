@@ -1,4 +1,3 @@
-import * as admin from 'firebase-admin';
 import { initializeApp } from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import deleteCategoryCallable from './callable-functions/delete-category';
@@ -21,21 +20,6 @@ dayjs.locale('pl');
 dayjs.tz.setDefault('Europe/Warsaw');
 
 initializeApp();
-
-function deleteFile(path: string) {
-	return admin.storage().bucket().file(path).delete();
-}
-
-/**
- * After deleting a category, this function removes icon associated with it.
- */
-export const deleteCategoryIconOnDelete = functions.firestore
-	.document('users/{uid}/categories/{categoryID}')
-	.onDelete(snap => {
-		const { iconPath } = snap.data();
-
-		return deleteFile(iconPath);
-	});
 
 export const onDocumentCreate = functions.firestore
 	.document('users/{uid}/{collectionName}/{documentID}')
