@@ -1,0 +1,11 @@
+[
+	{
+		"origin": [
+			"https://budget-monitor-c013c.web.app",
+			"https://budget-monitor-c013c.firebaseapp.com/"
+		],
+		"method": ["GET"],
+		"responseHeader": ["Content-Type"],
+		"maxAgeSeconds": 3600
+	}
+]
