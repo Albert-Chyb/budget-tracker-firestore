@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase-admin';
 import * as functions from 'firebase-functions';
 import deleteCategoryCallable from './callable-functions/delete-category';
 import deleteWalletCallable from './callable-functions/delete-wallet';
+import transferMoneyCallable from './callable-functions/transfer-money';
 import { changeCount } from './helpers/info/changeCount';
 import { addToDistinct, removeFromDistinct } from './helpers/info/distinct';
 import insertTransaction from './helpers/wallets/insertTransaction';
@@ -87,3 +88,5 @@ export const onTransactionUpdate = functions.firestore
 export const deleteWallet = functions.https.onCall(deleteWalletCallable);
 
 export const deleteCategory = functions.https.onCall(deleteCategoryCallable);
+
+export const transferMoney = functions.https.onCall(transferMoneyCallable);
